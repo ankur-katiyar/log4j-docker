@@ -82,7 +82,7 @@ spec:
 - [@ankur-katiyar](https://www.github.com/ankur-katiyar)
 
 ## Resources
- - [CVE-2021-45046](https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2021-45046)
+ - [CVE-2021-44228](https://nvd.nist.gov/vuln/detail/CVE-2021-44228)
 
 
 ## License
