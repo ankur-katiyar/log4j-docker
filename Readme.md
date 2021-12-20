@@ -2,7 +2,7 @@
 
 This repo has the docker and k8s YAMLs that are needed to recreate the log4j vulnerability (seel below).
 
-Follow [this blog](https://ankurkatiyar0.wixsite.com/legosamurai/post/cve-2021-44228-proof-of-concept-on-kubernetes) to understand how all of this is tied together.
+Follow [this blog](https://medium.com/@ankurkatiyar/cve-2021-44228-proof-of-concept-on-kubernetes-34c7337e8a89) to understand how all of this is tied together.
 #
 ## Build Docker Images
 
